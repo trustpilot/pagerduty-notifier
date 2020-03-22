@@ -1,0 +1,9 @@
+Pagerduty Notifier.app
+pagerduty-notifier
+assets/pd.iconset
+assets/pd.icns
+nohup.out
+.vscode/
+tmp/
+*.dmg
+*.pkg
