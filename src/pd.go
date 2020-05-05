@@ -93,89 +93,104 @@ func pdGetIncidents(cfg *ini.File) []pagerduty.Incident {
 	lastdate := readTimestamp()
 	incidents := make([]pagerduty.Incident, 0)
 
+INCIDENTS:
+	for _, i := range pdGetIncidentsSince(lastdate) {
+		lastdate, _ = time.Parse(time.RFC3339, i.CreatedAt)
+		log.Printf("Incident: %s", i.APIObject.Summary)
+		for _, team := range i.Teams {
+			log.Printf("Team: %s", team.Summary)
+		}
+		log.Printf("Service: %s", i.Service.Summary)
+
+		// check include filter
+		if len(includes) == 0 {
+			goto EXCLUDES
+		}
+		for _, filter := range includes {
+			switch filter.property {
+			case "service":
+				if (filter.notmatch && i.Service.Summary != filter.match) || (!filter.notmatch && (i.Service.Summary == filter.match)) {
+					if filter.filter.Find([]byte(i.APIObject.Summary)) != nil {
+						log.Printf("Included - service:%v, notmatch: %t, alert:<%s>", filter.match, filter.notmatch, i.APIObject.Summary)
+						goto EXCLUDES
+					}
+				}
+			case "team":
+				for _, t := range i.Teams {
+					if (filter.notmatch && t.Summary != filter.match) || (!filter.notmatch && (t.Summary == filter.match)) {
+						if filter.filter.Find([]byte(i.APIObject.Summary)) != nil {
+							log.Printf("Included - team:%v, notmatch: %t, alert:<%s>", filter.match, filter.notmatch, i.APIObject.Summary)
+							goto EXCLUDES
+						}
+					}
+				}
+			default:
+				log.Printf("Include filter property <%s> not implemented yet.", filter.property)
+			}
+		}
+		continue INCIDENTS
+
+		// check exclude filter
+	EXCLUDES:
+		for _, filter := range excludes {
+			switch filter.property {
+			case "service":
+				if (filter.notmatch && i.Service.Summary != filter.match) || (!filter.notmatch && (i.Service.Summary == filter.match)) {
+					if filter.filter.Find([]byte(i.APIObject.Summary)) != nil {
+						log.Printf("Excluded - service:%v, notmatch: %t, alert:<%s>", filter.match, filter.notmatch, i.APIObject.Summary)
+						continue INCIDENTS
+					}
+				}
+			case "team":
+				for _, t := range i.Teams {
+					if (filter.notmatch && t.Summary != filter.match) || (!filter.notmatch && (t.Summary == filter.match)) {
+						if filter.filter.Find([]byte(i.APIObject.Summary)) != nil {
+							log.Printf("Excluded - team:%v, notmatch: %t, alert:<%s>", filter.match, filter.notmatch, i.APIObject.Summary)
+							continue INCIDENTS
+						}
+					}
+				}
+			default:
+				log.Printf("Exclude filter property <%s> not implemented yet.", filter.property)
+			}
+		}
+		// Add incidents for notification
+		incidents = append(incidents, i)
+	}
+
+	// write last timestamp for next run, add a second to make sure we don't get the same incident next time :-()
+	writeTimestamp(lastdate.Add(time.Second))
+	return incidents
+}
+
+func pdGetIncidentsSince(since time.Time) []pagerduty.Incident {
+
+	incidents := make([]pagerduty.Incident, 0)
+	resp := &pagerduty.ListIncidentsResponse{}
+
 	opts := pagerduty.ListIncidentsOptions{
-		Since:      lastdate.Format(time.RFC3339),
+		Since:      since.Format(time.RFC3339),
 		Statuses:   statuses,
 		TeamIDs:    teamIDs,
 		UserIDs:    userIDs,
 		ServiceIDs: serviceIDs,
 		SortBy:     "created_at:ASC",
 		TimeZone:   "UTC",
+		APIListObject: pagerduty.APIListObject{
+			Limit:  25,
+			Offset: 0,
+		},
 	}
-	// log.Printf("opts: %+v\n", opts)
-	resp, err := pd.ListIncidents(opts)
-	if err != nil {
-		log.Println("Error from pagerduty: ", err)
-	} else {
+
+	for ok := true; ok; ok = resp.APIListObject.More {
+		log.Printf("API query since: %s, Limit: %v Offset: %v", since, opts.APIListObject.Limit, opts.APIListObject.Offset)
+		resp, _ = pd.ListIncidents(opts)
 		log.Printf("Got %d incidents", len(resp.Incidents))
-	INCIDENTS:
-		for _, i := range resp.Incidents {
-			lastdate, _ = time.Parse(time.RFC3339, i.CreatedAt)
-			log.Printf("Incident: %s", i.APIObject.Summary)
-			for _, team := range i.Teams {
-				log.Printf("Team: %s", team.Summary)
-			}
-			log.Printf("Service: %s", i.Service.Summary)
-
-			// check include filter
-			if len(includes) == 0 {
-				goto EXCLUDES
-			}
-			for _, filter := range includes {
-				switch filter.property {
-				case "service":
-					if (filter.notmatch && i.Service.Summary != filter.match) || (!filter.notmatch && (i.Service.Summary == filter.match)) {
-						if filter.filter.Find([]byte(i.APIObject.Summary)) != nil {
-							log.Printf("Included - service:%v, notmatch: %t, alert:<%s>", filter.match, filter.notmatch, i.APIObject.Summary)
-							goto EXCLUDES
-						}
-					}
-				case "team":
-					for _, t := range i.Teams {
-						if (filter.notmatch && t.Summary != filter.match) || (!filter.notmatch && (t.Summary == filter.match)) {
-							if filter.filter.Find([]byte(i.APIObject.Summary)) != nil {
-								log.Printf("Included - team:%v, notmatch: %t, alert:<%s>", filter.match, filter.notmatch, i.APIObject.Summary)
-								goto EXCLUDES
-							}
-						}
-					}
-				default:
-					log.Printf("Include filter property <%s> not implemented yet.", filter.property)
-				}
-			}
-			continue INCIDENTS
-
-			// check exclude filter
-		EXCLUDES:
-			for _, filter := range excludes {
-				switch filter.property {
-				case "service":
-					if (filter.notmatch && i.Service.Summary != filter.match) || (!filter.notmatch && (i.Service.Summary == filter.match)) {
-						if filter.filter.Find([]byte(i.APIObject.Summary)) != nil {
-							log.Printf("Excluded - service:%v, notmatch: %t, alert:<%s>", filter.match, filter.notmatch, i.APIObject.Summary)
-							continue INCIDENTS
-						}
-					}
-				case "team":
-					for _, t := range i.Teams {
-						if (filter.notmatch && t.Summary != filter.match) || (!filter.notmatch && (t.Summary == filter.match)) {
-							if filter.filter.Find([]byte(i.APIObject.Summary)) != nil {
-								log.Printf("Excluded - team:%v, notmatch: %t, alert:<%s>", filter.match, filter.notmatch, i.APIObject.Summary)
-								continue INCIDENTS
-							}
-						}
-					}
-				default:
-					log.Printf("Exclude filter property <%s> not implemented yet.", filter.property)
-				}
-			}
-			// Add incidents for notification
-			incidents = append(incidents, i)
-		}
-
-		// write last timestamp for next run, add a second to make sure we don't get the same incident next time :-()
-		writeTimestamp(lastdate.Add(time.Second))
+		log.Printf("APIListObject %+v", resp.APIListObject)
+		incidents = append(incidents, resp.Incidents...)
+		opts.APIListObject.Offset = opts.APIListObject.Offset + opts.APIListObject.Limit
 	}
+	log.Printf("Returning %d incidents total.", len(incidents))
 	return incidents
 }
 
