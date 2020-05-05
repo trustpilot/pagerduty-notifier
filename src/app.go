@@ -25,7 +25,7 @@ var menuItems = []trayhost.MenuItem{
 	{
 		Title: "Pause",
 		Handler: func() {
-			appNotify("Pagerduty Notifier", "This is not implemeted yet.", "", 30*time.Second)
+			appNotify("Pagerduty Notifier", "This is not implemeted yet.", "", nil, 30*time.Second)
 		},
 	},
 	{
@@ -67,10 +67,10 @@ func appInit() {
 func toggleStartup() {
 	if existsLaunchConf() {
 		deleteLaunchConf()
-		appNotify("Pagerduty Notifier", "Removed from Launch configuration", "", 10*time.Second)
+		appNotify("Pagerduty Notifier", "Removed from Launch configuration", "", nil, 10*time.Second)
 	} else {
 		writeLaunchConf()
-		appNotify("Pagerduty Notifier", "Added to launch configuration", "", 10*time.Second)
+		appNotify("Pagerduty Notifier", "Added to launch configuration", "", nil, 10*time.Second)
 	}
 }
 
@@ -79,7 +79,7 @@ func appEnterLoop() {
 	trayhost.EnterLoop()
 }
 
-func appNotify(title string, message string, url string, timeout time.Duration) {
+func appNotify(title string, message string, url string, image *trayhost.Image, timeout time.Duration) {
 
 	notification := trayhost.Notification{
 		Title:   title,
@@ -89,6 +89,10 @@ func appNotify(title string, message string, url string, timeout time.Duration) 
 
 	if url != "" {
 		notification.Handler = func() { openBrowser(url) }
+	}
+
+	if image != nil {
+		notification.Image = *image
 	}
 
 	notification.Display()

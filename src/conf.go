@@ -78,11 +78,11 @@ func cfgInit() *ini.File {
 
 		switch runtime.GOOS {
 		case "linux":
-			appNotify("HOME/.pagerduty.ini", "No ini file found, click here to see how.", "https://github.com/trustpilot/pagerduty-notifier", 0)
+			appNotify("HOME/.pagerduty.ini", "No ini file found, click here to see how.", "https://github.com/trustpilot/pagerduty-notifier", nil, 0)
 			os.Exit(1)
 
 		case "windows":
-			appNotify("HOME/.pagerduty.ini", "No ini file found, click here to see how.", "https://github.com/trustpilot/pagerduty-notifier", 0)
+			appNotify("HOME/.pagerduty.ini", "No ini file found, click here to see how.", "https://github.com/trustpilot/pagerduty-notifier", nil, 0)
 			os.Exit(1)
 
 		case "darwin":
@@ -99,7 +99,7 @@ func cfgInit() *ini.File {
 				os.Exit(1)
 			}
 
-			appNotify("HOME/.pagerduty.ini", "Created default config file, please edit and add token !", "https://github.com/trustpilot/pagerduty-notifier", 0)
+			appNotify("HOME/.pagerduty.ini", "Created default config file, please edit and add token !", "https://github.com/trustpilot/pagerduty-notifier", nil, 0)
 			os.Exit(0)
 
 		default:

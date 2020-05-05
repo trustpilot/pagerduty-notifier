@@ -9,6 +9,7 @@ import (
 
 	"github.com/PagerDuty/go-pagerduty"
 	"github.com/go-ini/ini"
+	"github.com/shurcooL/trayhost"
 )
 
 var pd *pagerduty.Client
@@ -208,6 +209,12 @@ func pdNotify(i pagerduty.Incident) {
 		title = fmt.Sprintf("Incident %s", i.Status)
 		message = removeCharacters(i.APIObject.Summary, "[]")
 	}
+	image := trayhost.Image{}
 
-	appNotify(title, message, i.APIObject.HTMLURL, 0)
+	if i.Urgency == "high" {
+		image.Kind = "png"
+		image.Bytes = getIcon("warning.png")
+	}
+
+	appNotify(title, message, i.APIObject.HTMLURL, &image, 0)
 }
