@@ -12,6 +12,9 @@ $(EXECUTABLE): src/*.go
 run:
 	open $(APPDIR)
 
+install:
+	cp -r $(APPDIR) /Applications
+
 icon-clear-cache:
 	sudo rm -rfv /Library/Caches/com.apple.iconservices.store
 	sudo find /private/var/folders/ \( -name com.apple.dock.iconcache -or -name com.apple.iconservices \) -exec rm -rfv {} \;
@@ -38,6 +41,6 @@ dmg: build
 	hdiutil create -volname $(APP) -srcfolder ./dist -ov ${PACKAGE}
 
 # Some pre-requisits for building this project
-install:
+install-dependencies:
 	go mod download
 
