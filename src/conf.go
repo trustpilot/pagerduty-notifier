@@ -125,11 +125,13 @@ func readTimestamp() time.Time {
 	if err == nil {
 		lastdate, err = time.Parse(time.RFC3339, string(timestamp))
 		if err != nil {
-			return time.Now().Add(time.Duration(-4) * time.Hour)
+			log.Printf("Error parsing timestamp file <%s>, returning 12 hours ago", timestampFile)
+			return time.Now().Add(time.Duration(-12) * time.Hour)
 		}
 		return lastdate
 	}
-	return time.Now().Add(time.Duration(-4) * time.Hour)
+	log.Printf("Error reading timestamp file <%s>, returning 12 hours ago", timestampFile)
+	return time.Now().Add(time.Duration(-12) * time.Hour)
 }
 
 func writeTimestamp(timestamp time.Time) {
