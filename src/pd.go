@@ -185,7 +185,11 @@ func pdGetIncidentsSince(since time.Time) []pagerduty.Incident {
 
 	for ok := true; ok; ok = resp.APIListObject.More {
 		log.Printf("API query since: %s, Limit: %v Offset: %v", since, opts.APIListObject.Limit, opts.APIListObject.Offset)
-		resp, _ = pd.ListIncidents(opts)
+		resp, err := pd.ListIncidents(opts)
+		if err != nil {
+			log.Println("Error: Cannot list incidents from Pagerduty API:", err)
+			return incidents
+		}
 		log.Printf("Got %d incidents", len(resp.Incidents))
 		log.Printf("APIListObject %+v", resp.APIListObject)
 		incidents = append(incidents, resp.Incidents...)
