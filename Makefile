@@ -36,8 +36,10 @@ clean:
 	rm -f assets/pd.icns
 	rm -f $(EXECUTABLE)
 	rm -f $(ICONFILE)
+	rm -f dist/Applications
 
 dmg: build
+	ln -fs /Applications dist
 	hdiutil create -volname $(APP) -srcfolder ./dist -ov ${PACKAGE}
 
 # Some pre-requisits for building this project
