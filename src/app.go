@@ -41,6 +41,8 @@ var menuItems = []trayhost.MenuItem{
 	},
 }
 
+var menuItemsCopy = []trayhost.MenuItem{}
+
 func appInit() {
 
 	// On macOS, when you run an app bundle, the working directory of the executed process
@@ -61,6 +63,18 @@ func appInit() {
 		log.Fatalln(err)
 	}
 
+	// Set initial checkmark for autostart
+	if existsLaunchConf() {
+		for i, m := range menuItems {
+			if m.Title == "Startup on login" {
+				menuItems[i].Title = "√ Startup on login"
+			}
+		}
+	}
+	for _, m := range menuItems {
+		menuItemsCopy = append(menuItemsCopy, m)
+	}
+
 	trayhost.Initialize("Pagerduty Notifier", iconData, menuItems)
 }
 
@@ -68,9 +82,24 @@ func toggleStartup() {
 	if existsLaunchConf() {
 		deleteLaunchConf()
 		appNotify("Pagerduty Notifier", "Removed from Launch configuration", "", nil, 10*time.Second)
+
+		for i, m := range menuItemsCopy {
+			if m.Title == "√ Startup on login" {
+				menuItemsCopy[i].Title = "Startup on login"
+			}
+		}
+		trayhost.UpdateMenu(menuItemsCopy)
+
 	} else {
 		writeLaunchConf()
 		appNotify("Pagerduty Notifier", "Added to launch configuration", "", nil, 10*time.Second)
+
+		for i, m := range menuItemsCopy {
+			if m.Title == "Startup on login" {
+				menuItemsCopy[i].Title = "√ Startup on login"
+			}
+		}
+		trayhost.UpdateMenu(menuItemsCopy)
 	}
 }
 
