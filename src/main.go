@@ -12,8 +12,8 @@ func main() {
 	// is approx 3 year old, written for an older OS version ?
 	runtime.LockOSThread()
 
-	appInit()        // setup application tray menu, icons etc
 	logInit()        // Initialize logger
+	appInit()        // setup application tray menu, icons etc
 	cfg := cfgInit() // read configuration file
 	pdInit(cfg)      // Initialize Pagerduty stuff
 
