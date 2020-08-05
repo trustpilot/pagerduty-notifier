@@ -9,7 +9,7 @@ build: $(EXECUTABLE) $(ICONFILE)
 $(EXECUTABLE): src/*.go
 	go build -o "$@" $^
 
-run:
+run: build
 	open $(APPDIR)
 
 install:
