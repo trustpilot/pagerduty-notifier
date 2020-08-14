@@ -12,6 +12,9 @@ $(EXECUTABLE): src/*.go
 run: build
 	open $(APPDIR)
 
+test:
+	go test -v src/*.go
+
 install:
 	cp -r $(APPDIR) /Applications
 
