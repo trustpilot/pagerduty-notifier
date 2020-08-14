@@ -12,10 +12,10 @@ func main() {
 	// is approx 3 year old, written for an older OS version ?
 	runtime.LockOSThread()
 
-	logInit()        // Initialize logger
-	appInit()        // setup application tray menu, icons etc
-	cfg := cfgInit() // read configuration file
-	pdInit(cfg)      // Initialize Pagerduty stuff
+	logInit("syslog") // Initialize logger
+	appInit()         // setup application tray menu, icons etc
+	cfg := cfgInit()  // read configuration file
+	pdInit(cfg)       // Initialize Pagerduty stuff
 
 	interval, err := cfg.Section("pagerduty").Key("interval").Int()
 	if err != nil {

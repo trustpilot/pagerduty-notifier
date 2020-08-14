@@ -45,11 +45,16 @@ func filterInit(filtertype string, cfg *ini.File) []Filter {
 	return list
 }
 
-func logInit() {
-	// setup logger to use syslog
-	logwriter, e := syslog.New(syslog.LOG_NOTICE, "pagerdutynotifier")
-	if e == nil {
-		log.SetOutput(logwriter)
+func logInit(out string) {
+	switch out {
+	case "syslog":
+		// setup logger to use syslog
+		logwriter, e := syslog.New(syslog.LOG_NOTICE, "pagerdutynotifier")
+		if e == nil {
+			log.SetOutput(logwriter)
+		}
+	case "stdout":
+		log.SetOutput(os.Stdout)
 	}
 }
 
