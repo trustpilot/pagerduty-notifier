@@ -207,7 +207,7 @@ func pdNotify(i pagerduty.Incident) {
 	reg := regexp.MustCompile(`\[#(\d+)\] (.+)`)
 	match := reg.FindStringSubmatch(i.APIObject.Summary)
 	if match != nil {
-		title = fmt.Sprintf("Incident %s at %s", i.Status, date.In(location).Format("15:04"))
+		title = fmt.Sprintf("Incident at %s (%s)", date.In(location).Format("15:04"), i.Status)
 		message = removeCharacters(match[2], "[]")
 	} else {
 		title = fmt.Sprintf("Incident %s", i.Status)
