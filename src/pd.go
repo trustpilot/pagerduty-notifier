@@ -110,7 +110,7 @@ INCIDENTS:
 		for _, filter := range includes {
 			switch filter.property {
 			case "service":
-				if (filter.notmatch && i.Service.Summary != filter.match) || (!filter.notmatch && (i.Service.Summary == filter.match)) {
+				if (filter.notmatch && (i.Service.Summary != filter.match)) || (!filter.notmatch && (i.Service.Summary == filter.match)) {
 					if filter.filter.Find([]byte(i.APIObject.Summary)) != nil {
 						log.Printf("Included - service:%v, notmatch: %t, alert:<%s>", filter.match, filter.notmatch, i.APIObject.Summary)
 						goto EXCLUDES
@@ -118,7 +118,7 @@ INCIDENTS:
 				}
 			case "team":
 				for _, t := range i.Teams {
-					if (filter.notmatch && t.Summary != filter.match) || (!filter.notmatch && (t.Summary == filter.match)) {
+					if (filter.notmatch && (t.Summary != filter.match)) || (!filter.notmatch && (t.Summary == filter.match)) {
 						if filter.filter.Find([]byte(i.APIObject.Summary)) != nil {
 							log.Printf("Included - team:%v, notmatch: %t, alert:<%s>", filter.match, filter.notmatch, i.APIObject.Summary)
 							goto EXCLUDES
