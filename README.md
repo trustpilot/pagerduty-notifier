@@ -19,6 +19,14 @@ Create your token here: https://&lt;your-company&gt;.pagerduty.com/api_keys
 Example configuration file (which is the default one you will get the first time you run the notifier.):
 
 ```
+[main]
+# default timezone is UTC
+timezone = Europe/Copenhagen
+# default pause timeout is "0", which is no timeout
+pause.timeout = 60
+# clear.on.unpause defines if notifier should clear last timestamp and start notifying from unpause time.
+clear.on.unpause = false
+
 [pagerduty]
 # You need to add your Pagerduty API token
 token = your-secret-token-here

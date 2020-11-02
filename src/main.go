@@ -1,9 +1,13 @@
 package main
 
 import (
+	"log"
 	"runtime"
 	"time"
 )
+
+var pauseTimeout int
+var clearOnUnpause bool
 
 func main() {
 
@@ -22,10 +26,24 @@ func main() {
 		interval = 30
 	}
 
+	pauseTimeout, err = cfg.Section("main").Key("pause.timeout").Int()
+	if err != nil { pauseTimeout = 0 }
+	clearOnUnpause, err = cfg.Section("main").Key("clear.on.unpause").Bool()
+	if err != nil {clearOnUnpause = true}
+
 	go func() {
 		for {
-			for _, incident := range pdGetIncidents(cfg) {
-				pdNotify(incident)
+			if pause {
+				if (pauseTimeout > 0) {
+					if time.Now().After(pauseStopTime) {
+						log.Println("Pause timeout ...")
+						togglePause()
+					}
+				}
+			} else {
+				for _, incident := range pdGetIncidents(cfg) {
+					pdNotify(incident)
+				}
 			}
 			time.Sleep(time.Duration(interval) * time.Second)
 		}

@@ -25,7 +25,7 @@ var menuItems = []trayhost.MenuItem{
 	{
 		Title: "Pause",
 		Handler: func() {
-			appNotify("Pagerduty Notifier", "This is not implemeted yet.", "", nil, 30*time.Second)
+			togglePause()
 		},
 	},
 	{
@@ -42,6 +42,8 @@ var menuItems = []trayhost.MenuItem{
 }
 
 var menuItemsCopy = []trayhost.MenuItem{}
+var pause = false
+var pauseStopTime time.Time
 
 func appInit() {
 
@@ -78,6 +80,39 @@ func appInit() {
 	trayhost.Initialize("Pagerduty Notifier", iconData, menuItems)
 }
 
+func togglePause() {
+	if pause {
+		appNotify("Pagerduty Notifier", "Unpausing notifications", "", nil, 10*time.Second)
+		log.Println("Stop pause ...")
+
+		for i, m := range menuItemsCopy {
+			if m.Title == "√ Pause" {
+				menuItemsCopy[i].Title = "Pause"
+			}
+		}
+		trayhost.UpdateMenu(menuItemsCopy)
+		pause = false
+		if clearOnUnpause {
+			writeTimestamp(time.Now())
+		}
+	} else {
+		msg := "Pausing notifications"
+		if (pauseTimeout > 0) {
+			msg = fmt.Sprintf("%s for %d minutes", msg, pauseTimeout)
+			pauseStopTime = time.Now().Add(time.Duration(pauseTimeout) * time.Minute)
+		}
+		appNotify("Pagerduty Notifier", msg, "", nil, 10*time.Second)
+		log.Println("Start pause ...")
+
+		for i, m := range menuItemsCopy {
+			if m.Title == "Pause" {
+				menuItemsCopy[i].Title = "√ Pause"
+			}
+		}
+		trayhost.UpdateMenu(menuItemsCopy)
+		pause = true
+	}
+}
 func toggleStartup() {
 	if existsLaunchConf() {
 		deleteLaunchConf()
