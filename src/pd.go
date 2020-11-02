@@ -28,7 +28,7 @@ func pdInit(cfg *ini.File) {
 	includes = filterInit("include", cfg)
 	excludes = filterInit("exclude", cfg)
 	pd = pagerduty.NewClient(cfg.Section("pagerduty").Key("token").String())
-	timezone := cfg.Section("pagerduty").Key("timezone").String()
+	timezone := cfg.Section("main").Key("timezone").String()
 	if timezone != "" {
 		var err error
 		location, err = time.LoadLocation(timezone)
