@@ -33,6 +33,10 @@ token = your-secret-token-here
 # default interval between poll's is 30 sec.
 interval = 30
 
+# set title of incident notification, use golang text/template references to
+# "github.com/PagerDuty/go-pagerduty/incident.go" Incident struct
+title = "Incident {{.Status}} at {{.CreatedAt | format}} ({{.Service.Summary}})"
+
 # Optional query parameters for the Pagerduty API
 # Use comma separated lists of names (for users also email). You will usually only use one of them.
 # If left blank, you will receive all incidents from the account.
@@ -76,6 +80,6 @@ with the time of last seen alert. This is to make sure that you will be notified
 
 ## Future features
 
-- Pause the alert notifications.
+- Chose between multiple pause intervals from menu
 - Acknowledge an alert directly from the notification.
-- Resend last alert
+- Overview of alerts from today in menu

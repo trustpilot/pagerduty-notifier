@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
 	"regexp"
+	"text/template"
 	"time"
 
 	"github.com/PagerDuty/go-pagerduty"
@@ -19,14 +21,20 @@ var teamIDs = []string{}
 var userIDs = []string{}
 var serviceIDs = []string{}
 
-var includes = []Filter{}
-var excludes = []Filter{}
+var includeFilters = []Filter{}
+var excludeFilters = []Filter{}
 var location = time.Local
+var titleTemplate *template.Template = nil
+
+func format(str string) (string, error) {
+	date, _ := time.Parse(time.RFC3339, str)
+	return date.In(location).Format("15:04"), nil
+}
 
 func pdInit(cfg *ini.File) {
 
-	includes = filterInit("include", cfg)
-	excludes = filterInit("exclude", cfg)
+	includeFilters = filterInit("include", cfg)
+	excludeFilters = filterInit("exclude", cfg)
 	pd = pagerduty.NewClient(cfg.Section("pagerduty").Key("token").String())
 	timezone := cfg.Section("main").Key("timezone").String()
 	if timezone != "" {
@@ -87,6 +95,18 @@ func pdInit(cfg *ini.File) {
 			serviceIDs = append(serviceIDs, s.ID)
 		}
 	}
+
+	// setup and parse title template if any
+	var fm = make(template.FuncMap)
+	fm["format"] = format
+	title := cfg.Section("pagerduty").Key("title").String()
+	if title != "" {
+		titleTemplate, err = template.New("title").Funcs(fm).Parse(title)
+		if err != nil {
+			log.Printf("Error parsing title template: %s", err)
+			os.Exit(1)
+		}
+	}
 }
 
 func pdGetIncidents(cfg *ini.File) []pagerduty.Incident {
@@ -104,10 +124,10 @@ INCIDENTS:
 		log.Printf("Service: %s", i.Service.Summary)
 
 		// check include filter
-		if len(includes) == 0 {
+		if len(includeFilters) == 0 {
 			goto EXCLUDES
 		}
-		for _, filter := range includes {
+		for _, filter := range includeFilters {
 			switch filter.property {
 			case "service":
 				if (filter.notmatch && (i.Service.Summary != filter.match)) || (!filter.notmatch && (i.Service.Summary == filter.match)) {
@@ -133,7 +153,7 @@ INCIDENTS:
 
 		// check exclude filter
 	EXCLUDES:
-		for _, filter := range excludes {
+		for _, filter := range excludeFilters {
 			switch filter.property {
 			case "service":
 				if (filter.notmatch && i.Service.Summary != filter.match) || (!filter.notmatch && (i.Service.Summary == filter.match)) {
@@ -205,12 +225,18 @@ func pdNotify(i pagerduty.Incident) {
 
 	date, _ := time.Parse(time.RFC3339, i.CreatedAt)
 	reg := regexp.MustCompile(`\[#(\d+)\] (.+)`)
+
+	if titleTemplate != nil {
+		var tpl bytes.Buffer
+		titleTemplate.Execute(&tpl, i)
+		title = tpl.String()
+	} else {
+		title = fmt.Sprintf("Incident at %s (%s)", date.In(location).Format("15:04"), i.Status)
+	}
 	match := reg.FindStringSubmatch(i.APIObject.Summary)
 	if match != nil {
-		title = fmt.Sprintf("Incident at %s (%s)", date.In(location).Format("15:04"), i.Status)
 		message = removeCharacters(match[2], "[]")
 	} else {
-		title = fmt.Sprintf("Incident %s", i.Status)
 		message = removeCharacters(i.APIObject.Summary, "[]")
 	}
 	image := trayhost.Image{}
