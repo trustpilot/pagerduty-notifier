@@ -73,10 +73,8 @@ func appInit() {
             }
         }
     }
-    for _, m := range menuItems {
-        menuItemsCopy = append(menuItemsCopy, m)
-    }
 
+    menuItemsCopy = append(menuItemsCopy, menuItems...)
     trayhost.Initialize("Pagerduty Notifier", iconData, menuItems)
 }
 
