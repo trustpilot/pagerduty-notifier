@@ -58,7 +58,7 @@ func logInit(out string) {
 	}
 }
 
-func cfgInit() *ini.File {
+func cfgInit() (*ini.File, error) {
 
 	var configFile string
 
@@ -83,44 +83,40 @@ func cfgInit() *ini.File {
 
 		switch runtime.GOOS {
 		case "linux":
-			appNotify("HOME/.pagerduty.ini", "No ini file found, click here to see how.", "https://github.com/trustpilot/pagerduty-notifier", nil, 0)
-			os.Exit(1)
-
+			appNotify(configFile, "No ini file found, click here to see how.", "https://github.com/trustpilot/pagerduty-notifier", nil, 0)
+			return nil, fmt.Errorf("no ini file found at %s", configFile)
 		case "windows":
-			appNotify("HOME/.pagerduty.ini", "No ini file found, click here to see how.", "https://github.com/trustpilot/pagerduty-notifier", nil, 0)
-			os.Exit(1)
-
+			appNotify(configFile, "No ini file found, click here to see how.", "https://github.com/trustpilot/pagerduty-notifier", nil, 0)
+			return nil, fmt.Errorf("no ini file found at %s", configFile)
 		case "darwin":
 			input, err := ioutil.ReadFile("template.ini")
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				return nil, fmt.Errorf("no ini file found at %s and template.ini could not be loaded either", configFile)
 			}
-
 			err = ioutil.WriteFile(configFile, input, 0644)
 			if err != nil {
-				fmt.Println("Error creating", configFile)
-				fmt.Println(err)
-				os.Exit(1)
+				return nil, fmt.Errorf("failed to create %s from template.ini: %w", configFile, err)
 			}
 
-			appNotify("HOME/.pagerduty.ini", "Created default config file, please edit and add token !", "https://github.com/trustpilot/pagerduty-notifier", nil, 0)
+			appNotify(
+				"HOME/.pagerduty.ini", "Created default config file, please edit and add valid PagerDuty token!",
+				"https://github.com/trustpilot/pagerduty-notifier", nil, 0)
 			os.Exit(0)
 
 		default:
-			log.Println("Unsupported platform")
-			os.Exit(1)
+			return nil, fmt.Errorf("unsupported platform %q", runtime.GOOS)
 		}
-
 	}
 
 	// init pagerduty api
 	cfg, err = ini.Load(configFile)
 	if err != nil {
-		log.Printf("Error reading config file <%v>\n", configFile)
-		os.Exit(1)
+		appNotify(
+			configFile, fmt.Sprintf("error reading config file %s: %v", configFile, err),
+			"https://github.com/trustpilot/pagerduty-notifier", nil, 0)
+		return nil, fmt.Errorf("error reading config file %s: %w", configFile, err)
 	}
-	return cfg
+	return cfg, nil
 }
 
 func readTimestamp() time.Time {
