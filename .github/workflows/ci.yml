@@ -23,5 +23,7 @@ jobs:
       run: make build
     - name: Run tests
       run: make test
+    - name: Run golangci-lint
+      run: make lint
     - name: Assemble package
       run: make dmg PACKAGE=PagerDutyNotifier.dmg

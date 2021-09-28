@@ -77,10 +77,9 @@ func cfgInit() (*ini.File, error) {
 	default:
 	}
 
-	// read the config file, if it doesn't exist we create one from template and notify about it.
-	cfg, err := ini.Load(configFile)
+	// test if we can read the config file, if it doesn't exist we create one from template and notify about it.
+	_, err := ini.Load(configFile)
 	if err != nil {
-
 		switch runtime.GOOS {
 		case "linux":
 			appNotify(configFile, "No ini file found, click here to see how.", "https://github.com/trustpilot/pagerduty-notifier", nil, 0)
@@ -109,7 +108,7 @@ func cfgInit() (*ini.File, error) {
 	}
 
 	// init pagerduty api
-	cfg, err = ini.Load(configFile)
+	cfg, err := ini.Load(configFile)
 	if err != nil {
 		appNotify(
 			configFile, fmt.Sprintf("error reading config file %s: %v", configFile, err),
@@ -170,12 +169,7 @@ func existsLaunchConf() bool {
 	return true
 }
 
-func deleteLaunchConf() {
+func deleteLaunchConf() error {
 	dst := fmt.Sprintf("%s/Library/LaunchAgents/%s", os.Getenv("HOME"), launchconf)
-	err := os.Remove(dst)
-
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	return os.Remove(dst)
 }
