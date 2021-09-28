@@ -79,20 +79,38 @@ func pdInit(cfg *ini.File) {
 		}
 	}
 
-	// get service ids
-	serviceList, err := pd.ListServices(pagerduty.ListServiceOptions{Query: ""})
-	if err != nil {
-		log.Println("Error: Cannot retrieve service list from Pagerduty API")
-		os.Exit(1)
-	}
 	serviceConf := make(map[string]bool)
 	for _, v := range cfg.Section("pagerduty").Key("services").Strings(",") {
+		log.Printf("Service %s enabled in config", v)
 		serviceConf[v] = true
 	}
-	for _, s := range serviceList.Services {
-		if serviceConf[s.Name] {
-			log.Printf("Found service %s with id %s", s.Name, s.ID)
-			serviceIDs = append(serviceIDs, s.ID)
+
+	ok := true
+	opts := pagerduty.ListServiceOptions{
+		APIListObject: pagerduty.APIListObject{
+			Limit:  25,
+			Offset: 0,
+		},
+	}
+
+	for k := range serviceConf {
+		for ok {
+			// get service ids that match given name
+			opts.Query = k
+			serviceList, err := pd.ListServices(opts)
+			if err != nil {
+				log.Println("Error: Cannot retrieve service list from Pagerduty API")
+				os.Exit(1)
+			}
+			for _, s := range serviceList.Services {
+				log.Printf("Checking service %s", s.Name)
+				if serviceConf[s.Name] {
+					log.Printf("Found service %s with id %s", s.Name, s.ID)
+					serviceIDs = append(serviceIDs, s.ID)
+				}
+			}
+			ok = serviceList.More
+			opts.Offset = opts.Offset + opts.Limit
 		}
 	}
 
