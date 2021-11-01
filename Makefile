@@ -15,6 +15,9 @@ run: build
 test:
 	go test -v src/*.go
 
+lint:
+	golangci-lint run
+
 install:
 	cp -r $(APPDIR) /Applications
 

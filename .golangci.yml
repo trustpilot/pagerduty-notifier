@@ -1,0 +1,7 @@
+linters:
+  enable:
+    - gofmt
+    - govet
+    - staticcheck
+issues:
+  max-same-issues: 0

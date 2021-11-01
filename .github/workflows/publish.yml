@@ -1,0 +1,31 @@
+name: Publish
+on:
+  push:
+    tags:
+    - 'v*.*.*'
+    - '20*-*'
+jobs:
+  build:
+    name: Publish binaries
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16.x
+    - uses: actions/cache@v2
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    - name: Assemble package
+      run: make dmg PACKAGE=PagerDutyNotifier.dmg
+    - name: Upload binaries to release
+      uses: softprops/action-gh-release@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        files: PagerDutyNotifier.dmg
+        tag: ${{ github.ref }}
+        body: "Release ${{ github.ref }}"
