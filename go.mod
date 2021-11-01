@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/PagerDuty/go-pagerduty v1.1.2
+	github.com/caseymrm/menuet v1.0.1 // indirect
 	github.com/go-ini/ini v1.55.0
 	github.com/shurcooL/trayhost v0.0.0-20181020202213-114974ef9e16
 	github.com/smartystreets/goconvey v1.6.4 // indirect

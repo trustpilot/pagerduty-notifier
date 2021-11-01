@@ -2,6 +2,10 @@ github.com/PagerDuty/go-pagerduty v1.1.2 h1:pTY5GKmmR88EeeI+9/LR+dKL2Chohz3L5yro
 github.com/PagerDuty/go-pagerduty v1.1.2/go.mod h1:ZKUzEnyuEMTCMwuzP5NyQIwPx+ThSKBNUva2/ns0Op8=
 github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgIH9cCH8=
 github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kBD4zp0CCIs=
+github.com/caseymrm/askm v1.0.0 h1:Ff5QN5GwuyCzg63++hU1jV+1JVYHYd0sw6KUkVd2GiQ=
+github.com/caseymrm/askm v1.0.0/go.mod h1:raj+vtH8SsGkuSg1/970qaONNyNlIb7zFv2LDVk6j+U=
+github.com/caseymrm/menuet v1.0.1 h1:7WCqrmb04Wh4iq7c7+LOPx1nookwV7xo2//Da3pEQ1o=
+github.com/caseymrm/menuet v1.0.1/go.mod h1:Vdn4A7NdnGnx9CwlhyhAn4ii5xrpQkvaONdzpTyJ4j0=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/go-ini/ini v1.55.0 h1:0wVcG9udk2C3TGgmdIGKK9ScOZHZB5nbG+gwji9fhhc=
