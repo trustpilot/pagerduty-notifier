@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -45,8 +46,11 @@ func pdInit(cfg *ini.File) {
 		}
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
+	defer cancel()
+
 	// get team ids
-	teamList, err := pd.ListTeams(pagerduty.ListTeamOptions{Query: ""})
+	teamList, err := pd.ListTeamsWithContext(ctx, pagerduty.ListTeamOptions{Query: ""})
 	if err != nil {
 		log.Println("Error: Cannot retrieve teams from Pagerduty API")
 		os.Exit(1)
@@ -63,7 +67,7 @@ func pdInit(cfg *ini.File) {
 	}
 
 	// get use ids
-	userList, err := pd.ListUsers(pagerduty.ListUsersOptions{Query: ""})
+	userList, err := pd.ListUsersWithContext(ctx, pagerduty.ListUsersOptions{Query: ""})
 	if err != nil {
 		log.Println("Error: Cannot retrieve user list from Pagerduty API")
 		os.Exit(1)
@@ -87,17 +91,15 @@ func pdInit(cfg *ini.File) {
 
 	ok := true
 	opts := pagerduty.ListServiceOptions{
-		APIListObject: pagerduty.APIListObject{
-			Limit:  25,
-			Offset: 0,
-		},
+		Limit:  25,
+		Offset: 0,
 	}
 
 	for k := range serviceConf {
 		for ok {
 			// get service ids that match given name
 			opts.Query = k
-			serviceList, err := pd.ListServices(opts)
+			serviceList, err := pd.ListServicesWithContext(ctx, opts)
 			if err != nil {
 				log.Println("Error: Cannot retrieve service list from Pagerduty API")
 				os.Exit(1)
@@ -135,7 +137,7 @@ func pdGetIncidents(cfg *ini.File) []pagerduty.Incident {
 INCIDENTS:
 	for _, i := range pdGetIncidentsSince(lastdate) {
 		lastdate, _ = time.Parse(time.RFC3339, i.CreatedAt)
-		log.Printf("Incident: %s", i.APIObject.Summary)
+		log.Printf("Incident: %s", i.Summary)
 		for _, team := range i.Teams {
 			log.Printf("Team: %s", team.Summary)
 		}
@@ -149,16 +151,16 @@ INCIDENTS:
 			switch filter.property {
 			case "service":
 				if (filter.notmatch && (i.Service.Summary != filter.match)) || (!filter.notmatch && (i.Service.Summary == filter.match)) {
-					if filter.filter.Find([]byte(i.APIObject.Summary)) != nil {
-						log.Printf("Included - service:%v, notmatch: %t, alert:<%s>", filter.match, filter.notmatch, i.APIObject.Summary)
+					if filter.filter.Find([]byte(i.Summary)) != nil {
+						log.Printf("Included - service:%v, notmatch: %t, alert:<%s>", filter.match, filter.notmatch, i.Summary)
 						goto EXCLUDES
 					}
 				}
 			case "team":
 				for _, t := range i.Teams {
 					if (filter.notmatch && (t.Summary != filter.match)) || (!filter.notmatch && (t.Summary == filter.match)) {
-						if filter.filter.Find([]byte(i.APIObject.Summary)) != nil {
-							log.Printf("Included - team:%v, notmatch: %t, alert:<%s>", filter.match, filter.notmatch, i.APIObject.Summary)
+						if filter.filter.Find([]byte(i.Summary)) != nil {
+							log.Printf("Included - team:%v, notmatch: %t, alert:<%s>", filter.match, filter.notmatch, i.Summary)
 							goto EXCLUDES
 						}
 					}
@@ -175,16 +177,16 @@ INCIDENTS:
 			switch filter.property {
 			case "service":
 				if (filter.notmatch && i.Service.Summary != filter.match) || (!filter.notmatch && (i.Service.Summary == filter.match)) {
-					if filter.filter.Find([]byte(i.APIObject.Summary)) != nil {
-						log.Printf("Excluded - service:%v, notmatch: %t, alert:<%s>", filter.match, filter.notmatch, i.APIObject.Summary)
+					if filter.filter.Find([]byte(i.Summary)) != nil {
+						log.Printf("Excluded - service:%v, notmatch: %t, alert:<%s>", filter.match, filter.notmatch, i.Summary)
 						continue INCIDENTS
 					}
 				}
 			case "team":
 				for _, t := range i.Teams {
 					if (filter.notmatch && t.Summary != filter.match) || (!filter.notmatch && (t.Summary == filter.match)) {
-						if filter.filter.Find([]byte(i.APIObject.Summary)) != nil {
-							log.Printf("Excluded - team:%v, notmatch: %t, alert:<%s>", filter.match, filter.notmatch, i.APIObject.Summary)
+						if filter.filter.Find([]byte(i.Summary)) != nil {
+							log.Printf("Excluded - team:%v, notmatch: %t, alert:<%s>", filter.match, filter.notmatch, i.Summary)
 							continue INCIDENTS
 						}
 					}
@@ -203,10 +205,11 @@ INCIDENTS:
 }
 
 func pdGetIncidentsSince(since time.Time) []pagerduty.Incident {
-
 	incidents := make([]pagerduty.Incident, 0)
 
 	opts := pagerduty.ListIncidentsOptions{
+		Limit:      25,
+		Offset:     0,
 		Since:      since.Format(time.RFC3339),
 		Statuses:   statuses,
 		TeamIDs:    teamIDs,
@@ -214,24 +217,23 @@ func pdGetIncidentsSince(since time.Time) []pagerduty.Incident {
 		ServiceIDs: serviceIDs,
 		SortBy:     "created_at:ASC",
 		TimeZone:   "UTC",
-		APIListObject: pagerduty.APIListObject{
-			Limit:  25,
-			Offset: 0,
-		},
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
+	defer cancel()
 
 	ok := true
 	for ok {
-		log.Printf("API query since: %s, Limit: %v Offset: %v", since, opts.APIListObject.Limit, opts.APIListObject.Offset)
-		resp, err := pd.ListIncidents(opts)
+		log.Printf("API query since: %s, Limit: %v Offset: %v", since, opts.Limit, opts.Offset)
+		resp, err := pd.ListIncidentsWithContext(ctx, opts)
 		if err != nil {
 			log.Println("Error: Cannot list incidents from Pagerduty API:", err)
 			return incidents
 		}
-		ok = resp.APIListObject.More
+		ok = resp.More
 		log.Printf("Got %d incidents", len(resp.Incidents))
 		incidents = append(incidents, resp.Incidents...)
-		opts.APIListObject.Offset = opts.APIListObject.Offset + opts.APIListObject.Limit
+		opts.Offset = opts.Offset + opts.Limit
 	}
 	log.Printf("Returning %d incidents total.", len(incidents))
 	return incidents
