@@ -3,8 +3,9 @@ APP=PagerdutyNotifier
 APPDIR=dist/$(APP).app
 EXECUTABLE=$(APPDIR)/Contents/MacOS/notifier
 ICONFILE=$(APPDIR)/Contents/Resources/PagerDuty.icns
+PDF=$(APPDIR)/Contents/Resources/pagerduty.pdf
 
-build: $(EXECUTABLE) $(ICONFILE)
+build: $(EXECUTABLE) $(ICONFILE) $(PDF)
 
 $(EXECUTABLE): src/*.go
 	go build -o "$@" $^
@@ -25,6 +26,9 @@ icon-clear-cache:
 	sudo touch /Applications/*
 	killall Dock; killall Finder
 
+$(PDF): assets/pd-logo.png
+	sips -s format pdf -Z 22 assets/pd-logo.png --out $(PDF)
+
 $(ICONFILE): assets/pd-logo.png
 	rm -rf assets/pd.iconset
 	mkdir -p assets/pd.iconset
@@ -39,6 +43,7 @@ clean:
 	rm -f assets/pd.icns
 	rm -f $(EXECUTABLE)
 	rm -f $(ICONFILE)
+	rm -f $(PDF)
 	rm -f dist/Applications
 
 dmg: build

@@ -30,6 +30,13 @@ func menuItems() []menuet.MenuItem {
 		//     State: existsLaunchConf(),
 		// },
 		{
+			Text: "Test",
+			Clicked: func() {
+				testNotification()
+			},
+			State: pause,
+		},
+		{
 			Text: "Pause",
 			Clicked: func() {
 				togglePause()
@@ -75,10 +82,45 @@ func appInit() {
 
 	menuet.App().Label = "com.trustpilot.pagerduty-notifier"
 	menuet.App().Children = menuItems
+	menuet.App().NotificationResponder = responseButton
 	menuet.App().SetMenuState(&menuet.MenuState{
-		Title: "Pagerduty",
-		// Image: "icon.icns",
+		// Title: "Pagerduty",
+		Image: "pagerduty",
 	})
+}
+
+func responseButton(id, response string) {
+	log.Printf("id: %v", id)
+	log.Printf("response: %s", response)
+
+	// menuet.App().Alert(menuet.Alert{
+	// 	MessageText:     "Alert",
+	// 	InformativeText: response,
+	// })
+}
+
+func testNotification() {
+	notification := menuet.Notification{
+		Title:                        "Incident 123",
+		Subtitle: 					  "subtitle",
+		Message:                      "P2, deadletter queue, something ..",
+		ActionButton:                 "Acknowledge",
+		// CloseButton:                  "Close",
+		// ResponsePlaceholder:          "123",
+		// RemoveFromNotificationCenter: false,
+		Identifier: 				  "123",
+	}
+
+	// if url != "" {
+	//     notification.Handler = func() { openBrowser(url) }
+	// }
+
+	// if image != nil {
+	//     notification.Image = *image
+	// }
+
+	menuet.App().Notification(notification)
+
 }
 
 func togglePause() {
